@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.license = 'Apache 2.0'
   s.platform = Gem::Platform::RUBY
   s.has_rdoc = true
-  s.extra_rdoc_files = ["README.rdoc", "LICENSE"]
+  s.extra_rdoc_files = ["README.md", "LICENSE"]
   s.summary = "Prune and manage your cookbooks"
   s.description = s.summary
   s.author = "Ho-Sheng Hsiao"
