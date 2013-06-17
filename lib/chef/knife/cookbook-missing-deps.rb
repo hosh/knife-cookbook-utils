@@ -50,6 +50,15 @@ module KnifeCookbookUtils
         puts "#{cookbook[0]} #{cookbook[1]}"
         missing_deps.each { |dep_name, dep_constraint| puts "  #{dep_name} #{dep_constraint}" }
       end
+
+      puts "To delete these cookbooks, use: knife cookbook missing deps --purge" if missing_deps.any? and !config[:purge]
+      return unless config[:purge] and missing_deps.any?
+
+      puts "Purging cookbooks with missing dependencies"
+      missing_deps.keys.each do |cookbook_name, cookbook_version|
+        puts "Deleting #{cookbook_name} #{cookbook_version}"
+        rest.delete("cookbooks/#{cookbook_name}/#{cookbook_version}")
+      end
     end
 
   end
