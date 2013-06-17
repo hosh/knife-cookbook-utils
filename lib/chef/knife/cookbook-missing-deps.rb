@@ -1,4 +1,5 @@
 require 'rlet'
+require 'ap'
 
 module KnifeCookbookUtils
   class CookbookMissingDeps < Chef::Knife
@@ -12,9 +13,12 @@ module KnifeCookbookUtils
 
     # A map of all cookbooks and versions
     let(:all_cookbooks) do
-      Hash.new { |h, key| h[key] = {} }.tap do |cookbooks|
+      Hash.new.tap do |cookbooks|
         rest.get("cookbooks/?num_versions=all").each do |cookbook, info|
           info['versions'].each do |version_info|
+            # We cannot use Hash.new to initialize a new hash, since it will try to
+            # add a new key while iterating
+            cookbooks[cookbook] ||= {}
             cookbooks[cookbook][version_info['version']] = version_info['url']
           end
         end
@@ -22,15 +26,18 @@ module KnifeCookbookUtils
     end
 
     let(:missing_deps) do
-      [].tap do |deps|
+      Hash.new.tap do |deps|
         all_cookbooks.each do |cookbook_name, versions|
           versions.each do |cookbook_version, cookbook_url|
+            Chef::Log.info("Checking deps for #{cookbook_name} #{cookbook_version}")
             cookbook = rest.get("cookbooks/#{cookbook_name}/#{cookbook_version}")
             cookbook.manifest['metadata']['dependencies'].each do |dep_cookbook_name, dep_constraint|
               _constraint = Chef::VersionConstraint.new(dep_constraint)
-              available_versions = all_cookbooks[dep_cookbook_name].keys.flatten
+              available_versions = (all_cookbooks[dep_cookbook_name] || {}).keys.flatten
               next if available_versions.any? { |c| _constraint.include?(c) }
-              deps << [dep_cookbook_name, dep_constraint]
+              Chef::Log.info("  Unsatisfied constraint: #{dep_cookbook_name} #{dep_constraint}")
+              deps[[cookbook_name, cookbook_version]] ||= []
+              deps[[cookbook_name, cookbook_version]] << [dep_cookbook_name, dep_constraint]
             end
           end
         end
@@ -38,7 +45,11 @@ module KnifeCookbookUtils
     end
 
     def run
-      puts missing_deps
+      puts "Missing dependencies:" if missing_deps.any?
+      missing_deps.each do |cookbook, missing_deps|
+        puts "#{cookbook[0]} #{cookbook[1]}"
+        missing_deps.each { |dep_name, dep_constraint| puts "  #{dep_name} #{dep_constraint}" }
+      end
     end
 
   end
