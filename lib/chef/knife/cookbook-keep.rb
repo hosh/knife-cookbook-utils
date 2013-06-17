@@ -14,9 +14,15 @@ module KnifeCookbookUtils
     let(:dry_run?)    { !config[:purge_old] }
     let(:parsed_arg0) { @name_args[0].to_i }
 
+    let(:cookbooks_to_keep) do
+      all_cookbooks.
+        map { |name, versions| versions.take(num_to_keep).map { |version, url| [name, version] } }.
+        flatten(1)
+    end
+
     let(:cookbooks_to_delete) do
       all_cookbooks.
-        map { |name, versions| versions.drop(num_to_keep).map { |version, url| [name, version, url] } }.
+        map { |name, versions| versions.drop(num_to_keep).map { |version, url| [name, version] } }.
         flatten(1)
     end
 
@@ -31,18 +37,33 @@ module KnifeCookbookUtils
 
     def run
       puts "Keeping latest #{num_to_keep} versions of cookbooks"
-      puts "DRY RUN" if dry_run?
-      puts "Will delete the following:", ""
 
-      cookbooks_to_delete.each do |cookbook, version, url|
-        puts "#{cookbook} #{version}"
+      cookbooks_to_keep.each do |name, version|
+        puts "#{name} #{version}"
       end
 
-      puts ""
-      puts "To delete these cookbooks, use:"
-      puts ""
-      puts "knife cookbook keep #{num_to_keep} --purge-old"
-      puts ""
+      if dry_run? and cookbooks_to_delete.any?
+        puts ""
+        puts "== DRY RUN =="
+        puts "Will delete the following:", ""
+      end
+
+      cookbooks_to_delete.each do |cookbook, version|
+        if dry_run?
+          puts "#{cookbook} #{version}"
+        else
+          puts "Deleting #{cookbook} #{version}"
+          rest.delete("cookbooks/#{cookbook}/#{version}")
+        end
+      end
+
+      if dry_run? and cookbooks_to_delete.any?
+        puts ""
+        puts "To delete these cookbooks, use:"
+        puts ""
+        puts "knife cookbook keep #{num_to_keep} --purge-old"
+        puts ""
+      end
     end
   end
 end
