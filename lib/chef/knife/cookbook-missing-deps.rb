@@ -29,8 +29,7 @@ module KnifeCookbookUtils
         all_cookbooks.each do |cookbook_name, versions|
           versions.each do |cookbook_version, cookbook_url|
             Chef::Log.info("Checking deps for #{cookbook_name} #{cookbook_version}")
-            cookbook = rest.get("cookbooks/#{cookbook_name}/#{cookbook_version}")
-            cookbook.manifest['metadata']['dependencies'].each do |dep_cookbook_name, dep_constraint|
+            dependencies_for_cookbook_version(cookbook_name, cookbook_version).each do |dep_cookbook_name, dep_constraint|
               _constraint = Chef::VersionConstraint.new(dep_constraint)
               available_versions = (all_cookbooks[dep_cookbook_name] || {}).keys.flatten
               next if available_versions.any? { |c| _constraint.include?(c) }
@@ -44,6 +43,13 @@ module KnifeCookbookUtils
     end
 
     let(:raw_cookbook_listing) { rest.get("cookbooks/?num_versions=all") }
+
+    def dependencies_for_cookbook_version(name, version)
+      rest.
+        get("cookbooks/#{name}/#{version}").
+        manifest['metadata']['dependencies']
+    end
+
 
     def run
       puts "Missing dependencies:" if missing_deps.any?
