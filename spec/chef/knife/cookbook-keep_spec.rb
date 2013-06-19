@@ -137,4 +137,69 @@ describe KnifeCookbookUtils::CookbookKeep do
       end
     end # with only three cookbook versions
   end # #cookbooks_to_keep
+
+  describe "#cookbooks_to_delete" do
+    subject { command.cookbooks_to_delete }
+
+    context "with only one cookbook version" do
+      let(:raw_cookbook_listing) { cookbooks_with_one_version }
+
+      context "when keeping latest version" do
+        let(:num_to_keep) { 1 }
+        it "should delete nothing" do
+          should eql [ ]
+        end
+      end
+
+      context "when keeping latest 2 versions" do
+        let(:num_to_keep) { 2 }
+        it "should delete nothing" do
+          should eql [ ]
+        end
+      end
+    end
+
+    context "with only two cookbook version" do
+      let(:raw_cookbook_listing) { cookbooks_with_two_versions }
+
+      context "when keeping latest version" do
+        let(:num_to_keep) { 1 }
+        it "should delete older versions" do
+          should eql [ ['rbenv', version.('1.4.0')] ]
+        end
+      end
+
+      context "when keeping latest 2 versions" do
+        let(:num_to_keep) { 2 }
+        it "should delete nothing" do
+          should eql [ ]
+        end
+      end
+    end
+
+    context "with only three cookbook version" do
+      let(:raw_cookbook_listing) { cookbooks_with_three_versions }
+
+      context "when keeping latest version" do
+        let(:num_to_keep) { 1 }
+        it "should delete older versions" do
+          should eql [ ['nginx', version.('1.6.0') ], ['nginx', version.('1.4.0')], ['rbenv', version.('1.4.0')] ]
+        end
+      end
+
+      context "when keeping latest 2 versions" do
+        let(:num_to_keep) { 2 }
+        it "should older versions" do
+          should eql [ ['nginx', version.('1.4.0')] ]
+        end
+      end
+
+      context "when keeping latest 3 versions" do
+        let(:num_to_keep) { 3 }
+        it "should delete nothing" do
+          should eql [ ]
+        end
+      end
+    end # with only three cookbook versions
+  end # #cookbooks_to_delete
 end
