@@ -13,7 +13,7 @@ module KnifeCookbookUtils
     # A map of all cookbooks and versions
     let(:all_cookbooks) do
       Hash.new.tap do |cookbooks|
-        rest.get("cookbooks/?num_versions=all").each do |cookbook, info|
+        raw_cookbook_listing.each do |cookbook, info|
           info['versions'].each do |version_info|
             # We cannot use Hash.new to initialize a new hash, since it will try to
             # add a new key while iterating
@@ -42,6 +42,8 @@ module KnifeCookbookUtils
         end
       end
     end
+
+    let(:raw_cookbook_listing) { rest.get("cookbooks/?num_versions=all") }
 
     def run
       puts "Missing dependencies:" if missing_deps.any?
