@@ -1,5 +1,4 @@
 require 'rlet'
-require 'ap'
 
 module KnifeCookbookUtils
   class CookbookMissingDeps < Chef::Knife
