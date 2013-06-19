@@ -41,6 +41,27 @@ describe KnifeCookbookUtils::CookbookKeep do
     }
   end
 
+  let(:cookbooks_with_three_versions) do
+    {
+      "nginx"=>{
+        "url"=>"https://api.opscode.com/organizations/example-org/cookbooks/rbenv",
+        "versions"=>[
+          {"version"=>"1.7.0", "url"=>"https://api.opscode.com/organizations/example-org/cookbooks/rbenv/1.7.0"},
+          {"version"=>"1.6.0", "url"=>"https://api.opscode.com/organizations/example-org/cookbooks/rbenv/1.6.0"},
+          {"version"=>"1.4.0", "url"=>"https://api.opscode.com/organizations/example-org/cookbooks/rbenv/1.4.0"},
+       ]},
+      "rbenv"=>{
+        "url"=>"https://api.opscode.com/organizations/example-org/cookbooks/rbenv",
+        "versions"=>[
+          {"version"=>"1.4.1", "url"=>"https://api.opscode.com/organizations/example-org/cookbooks/rbenv/1.4.1"},
+          {"version"=>"1.4.0", "url"=>"https://api.opscode.com/organizations/example-org/cookbooks/rbenv/1.4.0"},
+       ]},
+      "postgresql"=>{
+        "url"=>"https://api.opscode.com/organizations/example-org/cookbooks/postgresql",
+        "versions"=>[{"version"=>"3.0.0", "url"=>"https://api.opscode.com/organizations/example-org/cookbooks/postgresql/3.0.0"}]},
+    }
+  end
+
   describe "#cookbooks_to_keep" do
     subject { command.cookbooks_to_keep }
 
@@ -79,5 +100,41 @@ describe KnifeCookbookUtils::CookbookKeep do
         end
       end
     end
-  end
+
+    context "with only three cookbook version" do
+      let(:raw_cookbook_listing) { cookbooks_with_three_versions }
+
+      context "when keeping latest version" do
+        let(:num_to_keep) { 1 }
+        it "should only keep latest version" do
+          should eql [ ['nginx', version.('1.7.0') ], ['rbenv', version.('1.4.1')], ['postgresql', version.('3.0.0')] ]
+        end
+      end
+
+      context "when keeping latest 2 versions" do
+        let(:num_to_keep) { 2 }
+        it "should only keep latest 2 versions" do
+          should eql [
+            ['nginx', version.('1.7.0')],
+            ['nginx', version.('1.6.0')],
+            ['rbenv', version.('1.4.1')],
+            ['rbenv', version.('1.4.0')],
+            ['postgresql', version.('3.0.0')] ]
+        end
+      end
+
+      context "when keeping latest 3 versions" do
+        let(:num_to_keep) { 3 }
+        it "should only keep latest 3 versions" do
+          should eql [
+            ['nginx', version.('1.7.0')],
+            ['nginx', version.('1.6.0')],
+            ['nginx', version.('1.4.0')],
+            ['rbenv', version.('1.4.1')],
+            ['rbenv', version.('1.4.0')],
+            ['postgresql', version.('3.0.0')] ]
+        end
+      end
+    end # with only three cookbook versions
+  end # #cookbooks_to_keep
 end
