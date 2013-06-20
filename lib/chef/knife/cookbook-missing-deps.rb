@@ -1,8 +1,8 @@
-require 'rlet'
+require 'knife-cookbook-utils/rlet'
 
 module KnifeCookbookUtils
   class CookbookMissingDeps < Chef::Knife
-    include Let
+    include KnifeCookbookUtils::Let
 
     banner "knife cookbook missing deps (options)"
 

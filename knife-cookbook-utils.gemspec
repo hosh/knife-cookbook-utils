@@ -15,7 +15,6 @@ Gem::Specification.new do |s|
   s.homepage = "http://www.opscode.com"
 
   s.add_dependency 'chef', ">=11.0.0"
-  s.add_dependency 'rlet', '=0.5.1'
   s.add_development_dependency 'rspec'
 
   s.require_path = 'lib'
